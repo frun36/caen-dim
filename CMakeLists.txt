@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(caen)
 
-set(CMAKE_CXX_COMPILER g++-13)
+set(CMAKE_CXX_COMPILER g++)
 
 # Client
 add_subdirectory(client)
