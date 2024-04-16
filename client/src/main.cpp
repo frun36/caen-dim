@@ -4,40 +4,20 @@
 
 #include "dim/dic.hxx"
 
-class Rpc : public DimRpcInfo {
-    void rpcInfoHandler() {
-        int valin = getInt();
-        std::cout << "Callback RPC Received : " << valin << "\n";
-    }
-
-   public:
-    Rpc(const char *name)
-        : DimRpcInfo(name, -1){};
-};
-
-// int main() {
-//     int rpcCBValue = 0;
-//     Rpc rpcCB("TESTRPC/TEST");
-
-//     while (1) {
-//         rpcCB.setData(rpcCBValue);
-//              std::cout << "DUPAAAA\n";
-//              rpcCBValue++;
-//         if (rpcCBValue > 8) break;
-//         sleep(1);
-//     }
-// }
-
 // Blocking
 int main() {
-    int rpcValue = 0;
-    DimRpcInfo rpc("TESTRPC/TEST", -1);
+    int rpcValue = 69;
+    DimRpcInfo rpcMonVset("CAEN/MON_VSET", -1);
+    DimRpcInfo rpcSetVmin("CAEN/SET_VMIN", -1);
 
-    while (1) {
-        rpc.setData(rpcValue);
-        std::cout << "RPC Value: " << rpc.getInt() << "\n";
-        rpcValue++;
-        usleep(10);
+    char buff[] = "dupatest"; 
+
+    while (true) {
+        rpcMonVset.setData(buff);
+        rpcSetVmin.setData(buff);
+        std::cout << "RPC Value: " << rpcMonVset.getString() << " " << rpcSetVmin.getString() << "\n";
+        sleep(2);
     }
+
     // pause();
 }
