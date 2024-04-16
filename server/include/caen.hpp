@@ -23,20 +23,29 @@ void send(std::string command, std::string data = "") {
     std::cout << command << data << "\r\n";
 }
 
+struct Parameter {
+    std::string name;
+    bool isGlobal;
+
+    Parameter(std::string name = "", bool isGlobal = false) : name(name), isGlobal(isGlobal) {}
+};
+
 enum class CMD { MON,
            SET };
 
 enum class PAR { VSET,
            VMIN,
-           VMAX };
+           VMAX,
+           BDNAME };
 
-std::unordered_map<PAR, std::string> parMap{
-        {PAR::VSET, "VSET"},
-        {PAR::VMIN, "VMIN"},
-        {PAR::VMAX, "VMAX"},
+std::unordered_map<PAR, Parameter> parMap{
+        {PAR::VSET, Parameter("VSET")},
+        {PAR::VMIN, Parameter("VMIN")},
+        {PAR::VMAX, Parameter("VMAX")},
+        {PAR::BDNAME, Parameter("BDNAME", true)},
     };
 
-template <CMD cmd, PAR par>
+template <CMD cmd, PAR par, unsigned bd = 0, unsigned ch = 0>
 class CaenRpc : public DimRpc {
    private:
     std::string _command;
@@ -55,14 +64,14 @@ class CaenRpc : public DimRpc {
     static std::string _nameFromParams() { 
         std::string name = "CAEN/";
         name += (cmd == CMD::MON ? "MON_" : "SET_");
-        name += parMap[par];
+        name += parMap[par].name;
         return name;
     }
 public:
     CaenRpc() : DimRpc(_nameFromParams().c_str(), "C", "C") {
         if(cmd == CMD::MON)
-            _command = "$BD:0,CMD:MON,CH:0,PAR:" + parMap[par];
+            _command = "$BD:" + std::to_string(bd) + ",CMD:MON," + (parMap[par].isGlobal ? "" : "CH:" + std::to_string(ch) + ",PAR:") + parMap[par].name;
         else
-            _command = "$BD:0,CMD:SET,CH:0,PAR:" + parMap[par] + ",VAL:";
+            _command = "$BD:0,CMD:SET,CH:0,PAR:" + parMap[par].name + ",VAL:";
     }
 };
