@@ -7,15 +7,17 @@
 // Blocking
 int main() {
     int rpcValue = 69;
-    DimRpcInfo rpcMonVset("CAEN/MON_VSET", -1);
-    DimRpcInfo rpcSetVmin("CAEN/SET_VMIN", -1);
+    DimRpcInfo rpcMonBdname("CAEN/BDNAME/MON", -1);
+    DimRpcInfo rpcMonVset("CAEN/VSET/MON", -1);
+    DimRpcInfo rpcSetVset("CAEN/VSET/SET", -1);
 
-    char buff[] = "dupatest"; 
+    char buff[] = "test"; 
 
     while (true) {
+        rpcMonBdname.setData(buff);
         rpcMonVset.setData(buff);
-        rpcSetVmin.setData(buff);
-        std::cout << "RPC Value: " << rpcMonVset.getString() << " " << rpcSetVmin.getString() << "\n";
+        rpcSetVset.setData(buff);
+        std::cout << "RPC Value: " << rpcMonBdname.getString() << " " << rpcMonVset.getString() << " " << rpcSetVset.getString() << "\n";
         sleep(2);
     }
 

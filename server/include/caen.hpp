@@ -1,9 +1,10 @@
 #pragma once
 
+#include <cstdio>
+#include <format>
+#include <iostream>
 #include <string>
 #include <unordered_map>
-#include <cstdio>
-#include <iostream>
 
 #include "dim/dis.hxx"
 
@@ -23,35 +24,19 @@ void send(std::string command, std::string data = "") {
     std::cout << command << data << "\r\n";
 }
 
-struct Parameter {
-    std::string name;
-    bool isGlobal;
-
-    Parameter(std::string name = "", bool isGlobal = false) : name(name), isGlobal(isGlobal) {}
-};
-
 enum class CMD { MON,
-           SET };
+                 SET };
 
-enum class PAR { VSET,
-           VMIN,
-           VMAX,
-           BDNAME };
-
-std::unordered_map<PAR, Parameter> parMap{
-        {PAR::VSET, Parameter("VSET")},
-        {PAR::VMIN, Parameter("VMIN")},
-        {PAR::VMAX, Parameter("VMAX")},
-        {PAR::BDNAME, Parameter("BDNAME", true)},
-    };
-
-template <CMD cmd, PAR par, unsigned bd = 0, unsigned ch = 0>
 class CaenRpc : public DimRpc {
    private:
     std::string _command;
+    CMD _cmd;
+    std::string _par;
+    unsigned _bd, _ch;
+    bool _isGlobal;
 
     void rpcHandler() override {
-        if(cmd == CMD::MON) {
+        if (_cmd == CMD::MON) {
             send(_command);
             setData((char*)"Monitored value");
         } else {
@@ -61,19 +46,20 @@ class CaenRpc : public DimRpc {
         }
     }
 
-    static std::string _nameFromParams() { 
-        std::string name = "CAEN/";
-        name += (cmd == CMD::MON ? "MON_" : "SET_");
-        name += parMap[par].name;
-        return name;
+    static std::string _nameFromParams(CMD cmd, std::string par) {
+        return std::format("CAEN/{}/{}", par, cmd == CMD::MON ? "MON" : "SET");
     }
-public:
-    CaenRpc() : DimRpc(_nameFromParams().c_str(), "C", "C") {
-        if(cmd == CMD::MON)
-            _command = "$BD:" + std::to_string(bd) + ",CMD:MON," + (parMap[par].isGlobal ? "" : "CH:" + std::to_string(ch) + ",PAR:") + parMap[par].name;
+
+   public:
+    CaenRpc(CMD cmd, std::string par, bool isGlobal = false, unsigned ch = 0, unsigned bd = 0)
+        : DimRpc(_nameFromParams(cmd, par).c_str(), "C", "C"), _cmd(cmd), _par(par), _isGlobal(isGlobal), _ch(ch), _bd(bd) {
+        std::cout << "Creating CaenRpc " << _nameFromParams(cmd, par) << '\n';
+        
+        if (_cmd == CMD::MON)
+            _command = std::format("$BD:{:02},CMD:MON,CH:{:1},PAR:{}", _bd, _ch, _par);
+            // _command = "dupa";
         else
-            _command = "$BD:00,CMD:SET,CH:0,PAR:" + parMap[par].name + ",VAL:";
+            _command = std::format("$BD:{:02},CMD:SET,CH:{:1},PAR:{},VAL:", _bd, _ch, _par);
+            // _command = "duppa";
     }
 };
-
-// ToDo "CAEN/VSET/SET" ...

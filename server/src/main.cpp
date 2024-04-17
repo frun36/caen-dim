@@ -39,9 +39,12 @@ int main() {
     // vec.push_back(CaenRpc<CMD::MON, PAR::VMIN>("CAEN/VMIN"));
     // vec.push_back(CaenRpc<CMD::MON, PAR::VMAX>("CAEN/VMAX"));
 
-    CaenRpc<CMD::MON, PAR::VSET> a;
-    CaenRpc<CMD::SET, PAR::VMIN> b;
+    CaenRpc a(CMD::MON, "BDNAME", true);
+    CaenRpc b(CMD::MON, "VSET");
+    CaenRpc c(CMD::SET, "VSET");
 
+
+    std::cout << "Created RPCs\n";
     DimServer::start("CAEN");
     std::cout << "Server started\n";
     while (true)
