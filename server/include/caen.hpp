@@ -72,6 +72,8 @@ public:
         if(cmd == CMD::MON)
             _command = "$BD:" + std::to_string(bd) + ",CMD:MON," + (parMap[par].isGlobal ? "" : "CH:" + std::to_string(ch) + ",PAR:") + parMap[par].name;
         else
-            _command = "$BD:0,CMD:SET,CH:0,PAR:" + parMap[par].name + ",VAL:";
+            _command = "$BD:00,CMD:SET,CH:0,PAR:" + parMap[par].name + ",VAL:";
     }
 };
+
+// ToDo "CAEN/VSET/SET" ...
