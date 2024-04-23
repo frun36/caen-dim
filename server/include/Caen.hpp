@@ -1,76 +1,102 @@
 #pragma once
 
-#include <libusb-1.0/libusb.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include <cstring>
 #include <iostream>
-#include <string>
-#include <vector>
 
 /// @brief  Class representing the CAEN power supply device
 class Caen {
    private:
-    static constexpr uint16_t VENDOR_ID = 0x3277;
-    static constexpr uint16_t PRODUCT_ID = 0x0010;
-    static constexpr size_t BUFF_LEN = 64;
-
-    libusb_context *_ctx;
-    libusb_device_handle *_devHandle;
+    static constexpr size_t BUFF_SIZE = 256;
+    int _fd;
+    termios _tty;
 
    public:
     Caen() {
-        // Initialize libusb
-        if (libusb_init(&_ctx) != LIBUSB_SUCCESS) {
-            std::cerr << "Failed to initialize libusb\n";
+        // Open the serial port
+        _fd = open("/dev/ttyUSB0", O_RDWR);
+        if (_fd == -1) {
+            std::cerr << "Error opening serial port." << std::endl;
             exit(1);
         }
 
-        // Open USB device by vendor ID and product ID
-        _devHandle = libusb_open_device_with_vid_pid(_ctx, VENDOR_ID, PRODUCT_ID);
-        if (!_devHandle) {
-            std::cerr << "Failed to open USB device" << std::endl;
-            libusb_exit(_ctx);
+        // Configure the serial port
+        memset(&_tty, 0, sizeof(_tty));
+        if (tcgetattr(_fd, &_tty) != 0) {
+            std::cerr << "Error getting serial port attributes." << std::endl;
+            exit(1);
+        }
+
+        // Baud rate 9600
+        cfsetospeed(&_tty, B9600);
+        cfsetispeed(&_tty, B9600);
+
+        // Parity: none
+        _tty.c_cflag &= ~PARENB;
+
+        // Stop bit: 1
+        _tty.c_cflag &= ~CSTOPB;
+
+        // Clear size setting
+        _tty.c_cflag &= ~CSIZE;
+
+        // Data bits: 8
+        _tty.c_cflag |= CS8;
+
+        // Enable reading and ignore modem control lines
+        _tty.c_cflag |= CREAD | CLOCAL;
+
+        // Flow control: XON/XOFF, IXANY - any character will restart stopped output ?
+        _tty.c_iflag |= IXON | IXOFF | IXANY;
+
+        // Set input mode (non-canonical, no echo)
+        _tty.c_lflag &= ~(
+            // ICANON |
+            ECHO |
+            ECHOE |
+            ISIG);
+
+        // Set output mode (raw output)
+        _tty.c_oflag &= ~OPOST;
+
+        // Set timeout for read operations
+        _tty.c_cc[VMIN] = 0;
+        _tty.c_cc[VTIME] = 10;  // 1 second timeout
+
+        if (tcsetattr(_fd, TCSANOW, &_tty) != 0) {
+            std::cerr << "Error setting serial port attributes." << std::endl;
             exit(1);
         }
     }
 
-    void sendMessage(std::string message) {
-        size_t dataSize = message.length() + 2;
-
-        unsigned char data[BUFF_LEN] = {};
-
-        std::memcpy(data, message.c_str(), dataSize - 2);
-
-        data[dataSize - 2] = '\r';
-        data[dataSize - 1] = '\n';
-
-        int transferred = 0;
-        // Arbitrary parameters, to be verified
-        if (libusb_bulk_transfer(_devHandle, 0x02, data, dataSize, &transferred, 1000) != LIBUSB_SUCCESS) {
-            std::cerr << "Failed to send message: " + message + '\n';
-            return;
+    bool sendMessage(std::string message) {
+        char inputBuffer[BUFF_SIZE] = {};
+        memcpy(inputBuffer, message.c_str(), message.size());
+        inputBuffer[message.size()] = '\r';
+        inputBuffer[message.size() + 1] = '\n';
+        ssize_t bytesWritten = write(_fd, inputBuffer, message.size() + 2);
+        if (bytesWritten < 0) {
+            std::cerr << "Error writing to serial port." << std::endl;
+            return false;
         }
-
-        std::cout << "Message: " + message + " sent successfully\n";
+        return true;
     }
 
     std::string readMessage() {
-        unsigned char buffer[BUFF_LEN] = {};
-
-        int transferred = 0;
-        // Arbitrary parameters, to be verified
-        if (libusb_bulk_transfer(_devHandle, 0x81, buffer, BUFF_LEN, &transferred, 1000) != LIBUSB_SUCCESS) {
-            std::cerr << "Failed to read message\n";
+        char buffer[BUFF_SIZE] = {};
+        ssize_t bytes_read = read(_fd, buffer, BUFF_SIZE - 1);
+        if (bytes_read < 0) {
+            std::cerr << "Error reading from serial port." << std::endl;
             return "";
         }
-
-        std::string response(reinterpret_cast<char *>(buffer), transferred);
-        return response;
+        buffer[bytes_read] = '\0';  // Null terminate the string
+        return std::string(buffer);
     }
 
     ~Caen() {
-        libusb_release_interface(_devHandle, 0);
-        libusb_close(_devHandle);
-        libusb_exit(_ctx);
+        close(_fd);
     }
 };
