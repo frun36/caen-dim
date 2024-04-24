@@ -1,5 +1,5 @@
-add_executable(server src/main.cpp)
-add_executable(test test.cpp)
+add_executable(server src/main.cpp src/Caen.cpp)
+add_executable(test test.cpp src/Caen.cpp)
 add_executable(usb_test usb_test.cpp)
 
 target_include_directories(server PUBLIC include)
