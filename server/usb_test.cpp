@@ -35,6 +35,7 @@ int main() {
         std::cerr << "Error opening serial port." << std::endl;
         return 1;
     }
+    std::cout << "Serial port opened\n";
 
     // Configure the serial port
     struct termios tty;
@@ -43,6 +44,7 @@ int main() {
         std::cerr << "Error getting serial port attributes." << std::endl;
         return 1;
     }
+    std::cout << "Serial port attributes ok\n";
 
     // Baud rate 9600
     cfsetospeed(&tty, B9600);
@@ -85,6 +87,7 @@ int main() {
         std::cerr << "Error setting serial port attributes." << std::endl;
         return 1;
     }
+    std::cout << "Serial port attributes set\n";
 
     // Send command to the device
     const char* command = "$BD:00,CMD:MON,PAR:BDNAME\r\n"; // Example command
@@ -92,6 +95,8 @@ int main() {
         close(fd);
         return 1;
     }
+
+    std::cout << "Command sent\n";
 
     // Read response from the device
     char buffer[256];
