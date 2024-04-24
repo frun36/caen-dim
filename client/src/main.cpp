@@ -6,20 +6,13 @@
 
 // Blocking
 int main() {
-    int rpcValue = 69;
-    DimRpcInfo rpcMonBdname("CAEN/BDNAME/MON", -1);
-    DimRpcInfo rpcMonVset("CAEN/VSET/MON", -1);
-    DimRpcInfo rpcSetVset("CAEN/VSET/SET", -1);
+    DimRpcInfo rpc("CAEN/USB", -1);
 
-    char buff[] = "test"; 
+    char cmd[] = "$BD:00,CMD:MON,PAR:BDNAME"; 
 
     while (true) {
-        rpcMonBdname.setData(buff);
-        rpcMonVset.setData(buff);
-        rpcSetVset.setData(buff);
-        std::cout << "RPC Value: " << rpcMonBdname.getString() << " " << rpcMonVset.getString() << " " << rpcSetVset.getString() << "\n";
+        rpc.setData(cmd);
+        std::cout << "RPC Value: " << rpc.getString() <<"\n";
         sleep(2);
     }
-
-    // pause();
 }
