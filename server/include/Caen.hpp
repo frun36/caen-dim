@@ -6,6 +6,8 @@
 
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
+#include <cerrno>
 
 /// @brief  Class representing the CAEN power supply device
 class Caen {
@@ -16,18 +18,18 @@ class Caen {
 
    public:
     Caen() {
-        // Open the serial port
+        //// Open the serial port ////
         _fd = open("/dev/ttyUSB0", O_RDWR);
         if (_fd == -1) {
-            std::cerr << "Error opening serial port." << std::endl;
-            exit(1);
+            int error = errno;
+            throw std::runtime_error("Error opening serial port: " + std::string(strerror(error)));
         }
 
-        // Configure the serial port
+        //// Configure the serial port ////
         memset(&_tty, 0, sizeof(_tty));
         if (tcgetattr(_fd, &_tty) != 0) {
-            std::cerr << "Error getting serial port attributes." << std::endl;
-            exit(1);
+            int error = errno;
+            throw std::runtime_error("Error getting serial port attributes: " + std::string(strerror(error)));
         }
 
         // Baud rate 9600
@@ -67,30 +69,29 @@ class Caen {
         _tty.c_cc[VTIME] = 10;  // 1 second timeout
 
         if (tcsetattr(_fd, TCSANOW, &_tty) != 0) {
-            std::cerr << "Error setting serial port attributes." << std::endl;
-            exit(1);
+            int error = errno;
+            throw std::runtime_error("Error setting serial port attributes: " + std::string(strerror(error)));
         }
     }
 
-    bool sendMessage(std::string message) {
+    void sendMessage(std::string message) {
         char inputBuffer[BUFF_SIZE] = {};
         memcpy(inputBuffer, message.c_str(), message.size());
         inputBuffer[message.size()] = '\r';
         inputBuffer[message.size() + 1] = '\n';
         ssize_t bytesWritten = write(_fd, inputBuffer, message.size() + 2);
         if (bytesWritten < 0) {
-            std::cerr << "Error writing to serial port." << std::endl;
-            return false;
+            int error = errno;
+            throw std::runtime_error("Error writing to serial port: " + std::string(strerror(error)));
         }
-        return true;
     }
 
     std::string readMessage() {
         char buffer[BUFF_SIZE] = {};
         ssize_t bytes_read = read(_fd, buffer, BUFF_SIZE - 1);
         if (bytes_read < 0) {
-            std::cerr << "Error reading from serial port." << std::endl;
-            return "";
+            int error = errno;
+            throw std::runtime_error("Error reading from serial port: " + std::string(strerror(error)));
         }
         buffer[bytes_read] = '\0';  // Null terminate the string
         return std::string(buffer);
