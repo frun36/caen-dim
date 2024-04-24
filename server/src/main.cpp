@@ -7,12 +7,10 @@
 
 
 int main() {
-    CaenRpc a(CMD::MON, "BDNAME", true);
-    CaenRpc b(CMD::MON, "VSET");
-    CaenRpc c(CMD::SET, "VSET");
+    Caen caen;
+    CaenRpc caenRpc("CAEN/USB", caen);
 
-
-    std::cout << "Created RPCs\n";
+    std::cout << "Created RPC\n";
     DimServer::start("CAEN");
     std::cout << "Server started\n";
     while (true)
