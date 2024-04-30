@@ -7,3 +7,6 @@ target_include_directories(test PUBLIC include)
 
 target_link_libraries(server PUBLIC ${DIM_LIBRARY})
 target_link_libraries(test PUBLIC ${DIM_LIBRARY})
+target_link_libraries(server PUBLIC Threads::Threads)
+target_link_libraries(test PUBLIC Threads::Threads)
+

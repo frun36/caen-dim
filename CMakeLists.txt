@@ -4,6 +4,8 @@ project(caen)
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(Threads REQUIRED)
+
 # Search for libdim library - has to be in /usr/local/lib/dim
 find_library(DIM_LIBRARY
     NAMES dim
