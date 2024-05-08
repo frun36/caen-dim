@@ -25,8 +25,17 @@ class CaenRpc : public DimRpc {
     Caen& _caen;
 
     void rpcHandler() override {
-        _caen.sendMessage(std::string(getString()));
-        setData(const_cast<char*>(_caen.readMessage().c_str()));  // Potentially unsafe?
+        std::string message = std::string(getString());
+        _caen.sendMessage(message);
+        std::cout << "[SENT]: " << message << '\n';
+        std::string response;
+        try {
+            response = _caen.readMessage();
+        } catch(std::runtime_error e) {
+            response = "ERR:\"" + std::string(e.what()) + "\"";
+        }
+        std::cout << "[RECEIVED]: " << response << '\n';
+        setData(const_cast<char*>(response.c_str()));  // Potentially unsafe?
     }
 
    public:
